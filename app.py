@@ -6,6 +6,8 @@ from imutils.video import VideoStream
 
 app = Flask(__name__)
 vs = VideoStream(src=0).start()
+cap = cv2.VideoCapture(0)
+
 
 
 @app.route('/')
@@ -18,6 +20,10 @@ def vid_stream_imutlis():
     while True:
         frame = vs.read()
         # frame = imutils.resize(frame, width=400)
+        # This line lets you mount the camera the "right" way up
+        # with neopixels above
+        # That is rotate 180 deg if the camera Ribbon is "on top"
+        frame = imutils.rotate(frame, 180, scale=1)
         # encode to .JPG
         (flag, encodedImage) = cv2.imencode('.jpg', frame)
         if(not flag):
@@ -29,16 +35,17 @@ def vid_stream_imutlis():
 
 
 def vid_stream():
+    # Function produces error on Pi, but not Windows
     pth.pan(0)
     pth.tilt(-20)
-    cap = cv2.VideoCapture(0)
-    # FRAME_W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    # FRAME_H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # cap = cv2.VideoCapture(0)
+    FRAME_W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    FRAME_H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     while True:
         # Capture frame-by-frame
         ret, frame = cap.read()
         if(not ret):
-            print('Error getting image.')
+            print('Error getting image.', end='\r')
             continue
         # This line lets you mount the camera the "right" way up
         # with neopixels above
@@ -54,11 +61,12 @@ def vid_stream():
                b'\r\n')
 
 
+
 @app.route('/vid_feed')
 def vid_feed():
     return Response(
-        # vid_stream_imutlis(),
-        vid_stream(),
+        vid_stream_imutlis(),
+        # vid_stream(),
         mimetype='multipart/x-mixed-replace; boundary=frame'
         )
 
